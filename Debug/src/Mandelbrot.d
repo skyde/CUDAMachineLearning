@@ -233,6 +233,4 @@ src/Mandelbrot.o : ../src/Mandelbrot.cpp \
     /Developer/NVIDIA/CUDA-7.5/samples/common/inc/rendercheck_gl.h \
     /Volumes/Xcode/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/map \
     /Volumes/Xcode/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/__tree \
-    /Developer/NVIDIA/CUDA-7.5/samples/common/inc/nvShaderUtils.h \
-    ../src/Mandelbrot_kernel.h \
-    ../src/Mandelbrot_gold.h
+    /Developer/NVIDIA/CUDA-7.5/samples/common/inc/nvShaderUtils.h
