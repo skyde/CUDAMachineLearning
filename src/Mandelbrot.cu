@@ -62,8 +62,117 @@ char **pArgv = NULL;
 #endif
 #define BUFFER_DATA(i) ((char *)0 + i)
 
+__global__ void ImagePass(uchar4 *dst, int imageW, int imageH)
+{
+    const int ix = threadIdx.x + blockIdx.x * blockDim.x;
+    const int iy = threadIdx.y + blockIdx.y * blockDim.y;
+    int pixel = imageW * iy + ix;
+
+    uchar4 color;
+
+    color.x = 1;
+    color.y = 0;
+    color.z = 0;
+
+    dst[pixel] = color;
+
+//    dst[pixel].x = ix / imageW;
+//    dst[pixel].y = iy / imageH;
+//    dst[pixel].z = 1;
+
+//    // loop until all blocks completed
+//    for (unsigned int blockIndex=blockIdx.x; blockIndex < numBlocks; blockIndex += gridDim.x)
+//    {
+//        unsigned int blockX = blockIndex % gridWidth;
+//        unsigned int blockY = blockIndex / gridWidth;
+//
+//        // process this block
+//        const int ix = blockDim.x * blockX + threadIdx.x;
+//        const int iy = blockDim.y * blockY + threadIdx.y;
+//
+//        if ((ix < imageW) && (iy < imageH))
+//        {
+//            // Calculate the location
+//            const T xPos = (T)ix * scale + xOff;
+//            const T yPos = (T)iy * scale + yOff;
+//
+//            // Calculate the Mandelbrot index for the current location
+//            int m = CalcMandelbrot<T>(xPos, yPos, xJP, yJP, crunch, isJ);
+//            //            int m = blockIdx.x;         // uncomment to see scheduling order
+//            m = m > 0 ? crunch - m : 0;
+//
+//            // Convert the Mandelbrot index into a color
+//            uchar4 color;
+//
+//            if (m)
+//            {
+//                m += animationFrame;
+//                color.x = m * colors.x;
+//                color.y = m * colors.y;
+//                color.z = m * colors.z;
+//            }
+//            else
+//            {
+//                color.x = 0;
+//                color.y = 0;
+//                color.z = 0;
+//            }
+//
+//            // Output the pixel
+//            int pixel = imageW * iy + ix;
+//
+//            if (frame == 0)
+//            {
+//                color.w = 0;
+//                dst[pixel] = color;
+//            }
+//            else
+//            {
+//                int frame1 = frame + 1;
+//                int frame2 = frame1 / 2;
+//                dst[pixel].x = (dst[pixel].x * frame + color.x + frame2) / frame1;
+//                dst[pixel].y = (dst[pixel].y * frame + color.y + frame2) / frame1;
+//                dst[pixel].z = (dst[pixel].z * frame + color.z + frame2) / frame1;
+//            }
+//        }
+//
+//    }
+
+} // Mandelbrot0
+
+#define BLOCKDIM_X 16
+#define BLOCKDIM_Y 16
+
+// Increase the grid size by 1 if the image width or height does not divide evenly
+// by the thread block dimensions
+inline int iDivUp(int a, int b)
+{
+    return ((a % b) != 0) ? (a / b + 1) : (a / b);
+} // iDivUp
+
 void renderImage()
 {
+	checkCudaErrors(cudaGraphicsMapResources(1, &cuda_pbo_resource, 0));
+    size_t num_bytes;
+    checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void **)&d_dst, &num_bytes, cuda_pbo_resource));
+
+
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
+
+    int numWorkerBlocks = numSMs;
+
+//    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+//    dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
+
+//	printf("pass\n");
+
+	ImagePass<<<numWorkerBlocks, threads>>>(d_dst, imageW, imageH);
+
+	cudaDeviceSynchronize();
+
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0));
+
 //#if RUN_TIMING
 //    pass = 0;
 //#endif
@@ -120,6 +229,7 @@ void renderImage()
 void displayFunc(void)
 {
     sdkStartTimer(&hTimer);
+//    printf("displayFunc\n");
     renderImage();
 
     glBindTexture(GL_TEXTURE_2D, gl_Tex);
