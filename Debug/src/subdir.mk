@@ -27,16 +27,16 @@ CPP_DEPS += \
 src/%.o: ../src/%.cu
 	@echo 'Building file: $<'
 	@echo 'Invoking: NVCC Compiler'
-	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/2_Graphics" -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 -gencode arch=compute_30,code=sm_30  -odir "src" -M -o "$(@:%.o=%.d)" "$<"
-	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/2_Graphics" -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 --compile --relocatable-device-code=false -gencode arch=compute_30,code=compute_30 -gencode arch=compute_30,code=sm_30  -x cu -o  "$@" "$<"
+	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 -gencode arch=compute_30,code=sm_30  -odir "src" -M -o "$(@:%.o=%.d)" "$<"
+	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 --compile --relocatable-device-code=false -gencode arch=compute_30,code=compute_30 -gencode arch=compute_30,code=sm_30  -x cu -o  "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: NVCC Compiler'
-	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/2_Graphics" -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 -gencode arch=compute_30,code=sm_30  -odir "src" -M -o "$(@:%.o=%.d)" "$<"
-	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/2_Graphics" -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 --compile  -x c++ -o  "$@" "$<"
+	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 -gencode arch=compute_30,code=sm_30  -odir "src" -M -o "$(@:%.o=%.d)" "$<"
+	/Developer/NVIDIA/CUDA-7.5/bin/nvcc -I"/Developer/NVIDIA/CUDA-7.5/samples/common/inc" -I"/Users/admin/cuda-workspace/CUDAMachineLearning" -G -g -O0 --compile  -x c++ -o  "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

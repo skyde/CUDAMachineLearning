@@ -49,8 +49,8 @@
 #include <string.h>
 #include <cstdio>
 
-#include "Mandelbrot_kernel.h"
-#include "Mandelbrot_gold.h"
+//#include "Mandelbrot_kernel.h"
+//#include "Mandelbrot_gold.h"
 
 #define MAX_EPSILON_ERROR 5.0f
 
@@ -257,43 +257,42 @@ void GetSample(int sampleIndex, float &x, float &y)
     y = (1.0f / 128.0f) * (0.5f + (float)pairData[sampleIndex][1]);
 } // GetSample
 
-// The core Mandelbrot calculation function template
-template<class T>
-inline int CalcMandelbrot(const T xPos, const T yPos, const T xJParam, const T yJParam, const int crunch,
-                          const bool isJulia)
-{
-    T x, y, xx, yy, xC, yC;
-    int i = crunch;
+//// The core Mandelbrot calculation function template
+//inline int CalcMandelbrot(const double xPos, const double yPos, const double xJParam, const double yJParam, const int crunch,
+//                          const bool isJulia)
+//{
+//	double x, y, xx, yy, xC, yC;
+//    int i = crunch;
+//
+//    if (isJulia)
+//    {
+//        xC = xJParam;
+//        yC = yJParam;
+//        y = yPos;
+//        x = xPos;
+//        yy = y * y;
+//        xx = x * x;
+//    }
+//    else
+//    {
+//        xC = xPos;
+//        yC = yPos;
+//        x = y = 0;
+//        xx = yy = 0;
+//    }
+//
+//    while (--i && (xx + yy < 4.0f))
+//    {
+//    	y = x * y +  x * y + yC ;
+//        x = xx - yy + xC ;
+//        yy = y * y;
+//        xx = x * x;
+//    }
+//
+//    return i;
+//} // CalcMandelbrot
 
-    if (isJulia)
-    {
-        xC = xJParam;
-        yC = yJParam;
-        y = yPos;
-        x = xPos;
-        yy = y * y;
-        xx = x * x;
-    }
-    else
-    {
-        xC = xPos;
-        yC = yPos;
-        x = y = 0;
-        xx = yy = 0;
-    }
-
-    while (--i && (xx + yy < 4.0f))
-    {
-    	y = x * y +  x * y + yC ;
-        x = xx - yy + xC ;
-        yy = y * y;
-        xx = x * x;
-    }
-
-    return i;
-} // CalcMandelbrot
-
-__global__ void Mandelbrot0(uchar4 *dst, const int imageW, const int imageH, const int crunch, const double xOff, const double yOff,
+__global__ void ImagePass(uchar4 *dst, const int imageW, const int imageH, const int crunch, const double xOff, const double yOff,
                             const double xJP, const double yJP, const double scale, const uchar4 colors, const int frame,
                             const int animationFrame, const int gridWidth, const int numBlocks, const bool isJ)
 {
@@ -315,43 +314,50 @@ __global__ void Mandelbrot0(uchar4 *dst, const int imageW, const int imageH, con
             const double yPos = (double)iy * scale + yOff;
 
             // Calculate the Mandelbrot index for the current location
-            int m = CalcMandelbrot<double>(xPos, yPos, xJP, yJP, crunch, isJ);
-            //            int m = blockIdx.x;         // uncomment to see scheduling order
-            m = m > 0 ? crunch - m : 0;
+//            int m = CalcMandelbrot(xPos, yPos, xJP, yJP, crunch, isJ);
+//            //            int m = blockIdx.x;         // uncomment to see scheduling order
+//            m = m > 0 ? crunch - m : 0;
 
             // Convert the Mandelbrot index into a color
             uchar4 color;
 
-            if (m)
-            {
-                m += animationFrame;
-                color.x = m * colors.x;
-                color.y = m * colors.y;
-                color.z = m * colors.z;
-            }
-            else
-            {
-                color.x = 0;
-                color.y = 0;
-                color.z = 0;
-            }
-
-            // Output the pixel
             int pixel = imageW * iy + ix;
 
-            if (frame == 0)
-            {
-                color.w = 0;
-                dst[pixel] = color;
-            }
-            else
-            {
-                int frame1 = frame + 1;
-                int frame2 = frame1 / 2;
-                dst[pixel].x = (dst[pixel].x * frame + color.x + frame2) / frame1;
-                dst[pixel].y = (dst[pixel].y * frame + color.y + frame2) / frame1;
-                dst[pixel].z = (dst[pixel].z * frame + color.z + frame2) / frame1;
-            }
+            color.x = sin(xPos * 10.0) * 255.0;
+            color.y = cos(yPos * 10.0) * 255.0;
+            color.z = xPos * yPos / 10;
+
+            dst[pixel] = color;
+//            if (m)
+//            {
+//                m += animationFrame;
+//                color.x = m * colors.x;
+//                color.y = m * colors.y;
+//                color.z = m * colors.z;
+//            }
+//            else
+//            {
+//                color.x = 0;
+//                color.y = 0;
+//                color.z = 0;
+//            }
+//
+//            // Output the pixel
+//            int pixel = imageW * iy + ix;
+//
+//            if (frame == 0)
+//            {
+//                color.w = 0;
+//                dst[pixel] = color;
+//            }
+//            else
+//            {
+//                int frame1 = frame + 1;
+//                int frame2 = frame1 / 2;
+//                dst[pixel].x = (dst[pixel].x * frame + color.x + frame2) / frame1;
+//                dst[pixel].y = (dst[pixel].y * frame + color.y + frame2) / frame1;
+//                dst[pixel].z = (dst[pixel].z * frame + color.z + frame2) / frame1;
+//            }
         }
 
     }
@@ -367,7 +373,7 @@ inline int iDivUp(int a, int b)
 } // iDivUp
 
 // The host CPU Mandelbrot thread spawner
-void RunMandelbrot0(uchar4 *dst, const int imageW, const int imageH, const int crunch, const double xOff, const double yOff,
+void RunImagePass(uchar4 *dst, const int imageW, const int imageH, const int crunch, const double xOff, const double yOff,
                     const double xjp, const double yjp, const double scale, const uchar4 colors, const int frame,
                     const int animationFrame, const int mode, const int numSMs, const bool isJ, int version)
 {
@@ -376,7 +382,11 @@ void RunMandelbrot0(uchar4 *dst, const int imageW, const int imageH, const int c
 
     int numWorkerBlocks = numSMs;
 
-    Mandelbrot0<double><<<numWorkerBlocks, threads>>>(dst, imageW, imageH, crunch, xOff, yOff,
+//    printf("pass\n");
+
+    ImagePass<<<numWorkerBlocks, threads>>>(dst, imageW, imageH, crunch, xOff, yOff,
+            xjp, yjp, scale, colors, frame, animationFrame, grid.x, grid.x *grid.y, isJ);
+//            (float)xJParam, (float)yJParam, (float)s, colors, pass++, animationFrame, g_isJuliaSet);
 
 
     getLastCudaError("Mandelbrot0 kernel execution failed.\n");
@@ -400,7 +410,7 @@ void renderImage(bool bUseOpenGL, bool fp64, int mode)
 	double x = (xs - (double)imageW * 0.5f) * s + xOff;
 	double y = (ys - (double)imageH * 0.5f) * s + yOff;
 
-	RunMandelbrot0(d_dst, imageW, imageH, crunch, x, y,
+	RunImagePass(d_dst, imageW, imageH, crunch, x, y,
 					   xJParam, yJParam, s, colors, pass++, animationFrame, precisionMode, numSMs, g_isJuliaSet, version);
 
 	cudaDeviceSynchronize();
@@ -1181,53 +1191,53 @@ int runSingleTest(int argc, char **argv)
     return true;
 }
 
-//Performance Test
-void runBenchmark(int argc, char **argv)
-{
-    int N = 1000;
-    // initialize Data for CUDA
-    initData(argc, argv);
-
-    printf("\n* Run Performance Test\n");
-    printf("Image Size %d x %d\n",imageW, imageH);
-    printf("Double Precision\n");
-    printf("%d Iterations\n",N);
-
-    // Allocate memory for renderImage (to be able to render into a CUDA memory buffer)
-    checkCudaErrors(cudaMalloc((void **)&d_dst, (imageW * imageH * sizeof(uchar4))));
-
-    float xs, ys;
-
-    // Get the anti-alias sub-pixel sample location
-    GetSample(0, xs, ys);
-
-    double s = scale / (float)imageW;
-    double x = (xs - (double)imageW * 0.5f) * s + xOff;
-    double y = (ys - (double)imageH * 0.5f) * s + yOff;
-
-    // Create Timers
-    StopWatchInterface *kernel_timer = NULL;
-    sdkCreateTimer(&kernel_timer);
-    sdkStartTimer(&kernel_timer);
-
-    // render Mandelbrot set and verify
-    for (int i=0; i < N; i++)
-    {
-        RunMandelbrot0(d_dst, imageW, imageH, crunch, x, y,
-                       xJParam, yJParam, s, colors, pass++, animationFrame, 2, numSMs, g_isJuliaSet, version);
-        cudaDeviceSynchronize();
-    }
-
-    sdkStopTimer(&hTimer);
-    float ExecutionTime = sdkGetTimerValue(&kernel_timer);
-
-    float PixelsPerSecond = (float)imageW*(float)imageH*N/(ExecutionTime/1000.0f);
-
-    printf("\nMegaPixels Per Second %.4f\n",PixelsPerSecond/1e6);
-
-    checkCudaErrors(cudaFree(d_dst));
-    sdkDeleteTimer(&kernel_timer);
-}
+////Performance Test
+//void runBenchmark(int argc, char **argv)
+//{
+//    int N = 1000;
+//    // initialize Data for CUDA
+//    initData(argc, argv);
+//
+//    printf("\n* Run Performance Test\n");
+//    printf("Image Size %d x %d\n",imageW, imageH);
+//    printf("Double Precision\n");
+//    printf("%d Iterations\n",N);
+//
+//    // Allocate memory for renderImage (to be able to render into a CUDA memory buffer)
+//    checkCudaErrors(cudaMalloc((void **)&d_dst, (imageW * imageH * sizeof(uchar4))));
+//
+//    float xs, ys;
+//
+//    // Get the anti-alias sub-pixel sample location
+//    GetSample(0, xs, ys);
+//
+//    double s = scale / (float)imageW;
+//    double x = (xs - (double)imageW * 0.5f) * s + xOff;
+//    double y = (ys - (double)imageH * 0.5f) * s + yOff;
+//
+//    // Create Timers
+//    StopWatchInterface *kernel_timer = NULL;
+//    sdkCreateTimer(&kernel_timer);
+//    sdkStartTimer(&kernel_timer);
+//
+//    // render Mandelbrot set and verify
+//    for (int i=0; i < N; i++)
+//    {
+////        RunMandelbrot0(d_dst, imageW, imageH, crunch, x, y,
+////                       xJParam, yJParam, s, colors, pass++, animationFrame, 2, numSMs, g_isJuliaSet, version);
+//        cudaDeviceSynchronize();
+//    }
+//
+//    sdkStopTimer(&hTimer);
+//    float ExecutionTime = sdkGetTimerValue(&kernel_timer);
+//
+//    float PixelsPerSecond = (float)imageW*(float)imageH*N/(ExecutionTime/1000.0f);
+//
+//    printf("\nMegaPixels Per Second %.4f\n",PixelsPerSecond/1e6);
+//
+//    checkCudaErrors(cudaFree(d_dst));
+//    sdkDeleteTimer(&kernel_timer);
+//}
 
 // General initialization call for CUDA Device
 void chooseCudaDevice(int argc, const char **argv, bool bUseOpenGL)
@@ -1349,7 +1359,7 @@ int main(int argc, char **argv)
         }
 
         // We run the Automated Performance Test
-        runBenchmark(argc, argv);
+//        runBenchmark(argc, argv);
 
         // cudaDeviceReset causes the driver to clean up all state. While
         // not mandatory in normal operation, it is good practice.  It is also
