@@ -294,7 +294,7 @@ void GetSample(int sampleIndex, float &x, float &y)
 
 __global__ void ImagePass(uchar4 *dst, const int imageW, const int imageH, const int crunch, const double xOff, const double yOff,
                             const double xJP, const double yJP, const double scale, const uchar4 colors, const int frame,
-                            const int animationFrame, const int gridWidth, const int numBlocks, const bool isJ)
+                            const int animationFrame, const int gridWidth, const int numBlocks)
 {
 
     // loop until all blocks completed
@@ -385,7 +385,7 @@ void RunImagePass(uchar4 *dst, const int imageW, const int imageH, const int cru
 //    printf("pass\n");
 
     ImagePass<<<numWorkerBlocks, threads>>>(dst, imageW, imageH, crunch, xOff, yOff,
-            xjp, yjp, scale, colors, frame, animationFrame, grid.x, grid.x *grid.y, isJ);
+            xjp, yjp, scale, colors, frame, animationFrame, grid.x, grid.x *grid.y);
 //            (float)xJParam, (float)yJParam, (float)s, colors, pass++, animationFrame, g_isJuliaSet);
 
 
